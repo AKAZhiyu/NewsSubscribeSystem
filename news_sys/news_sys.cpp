@@ -1,20 +1,81 @@
-﻿// news_sys.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
-//
+﻿#include <mysql_driver.h>
+#include <mysql_connection.h>
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/statement.h>
+#include <cppconn/resultset.h>
 
 #include <iostream>
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    sql::mysql::MySQL_Driver* driver;
+    sql::Connection* con;
+    sql::Statement* stmt;
+
+    driver = sql::mysql::get_mysql_driver_instance();
+    con = driver->connect("tcp://127.0.0.1:3306", "root", "zzx20030628");
+    con->setSchema("subscription_db");
+    stmt = con->createStatement();
+    //stmt->execute("CREATE TABLE IF NOT EXISTS test_table (id INT AUTO_INCREMENT, name VARCHAR(255), PRIMARY KEY(id))");
+    //stmt->executeQuery("SELECT * FROM newspaper");
+    sql::ResultSet* res;
+    res = stmt->executeQuery("SELECT * FROM newspaper");
+    while (res->next()) {
+        std::cout << "id: " << res->getInt("id") << ", name: " << res->getString("newspaper_name") << std::endl;
+        std::cout << "period: " << res->getInt("_period") << std::endl;
+
+    }
+    delete res;
+    delete stmt;
+    delete con;
+    return 0;
 }
 
-// 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
-// 调试程序: F5 或调试 >“开始调试”菜单
+/*
+* 
+*   sql::mysql::MySQL_Driver* driver;
+    sql::Connection* con;
+    sql::Statement* stmt;
 
-// 入门使用技巧: 
-//   1. 使用解决方案资源管理器窗口添加/管理文件
-//   2. 使用团队资源管理器窗口连接到源代码管理
-//   3. 使用输出窗口查看生成输出和其他消息
-//   4. 使用错误列表窗口查看错误
-//   5. 转到“项目”>“添加新项”以创建新的代码文件，或转到“项目”>“添加现有项”以将现有代码文件添加到项目
-//   6. 将来，若要再次打开此项目，请转到“文件”>“打开”>“项目”并选择 .sln 文件
+    driver = sql::mysql::get_mysql_driver_instance();
+    con = driver->connect("tcp://127.0.0.1:3306", "root", "zzx20030628");
+    con->setSchema("subscription_db");
+    stmt = con->createStatement();
+    //stmt->execute("CREATE TABLE IF NOT EXISTS test_table (id INT AUTO_INCREMENT, name VARCHAR(255), PRIMARY KEY(id))");
+
+    sql::ResultSet* res;
+
+    res = stmt->executeQuery("SELECT * FROM newspaper");
+
+    while (res->next()) {
+        std::cout << "id: " << res->getInt("id") << ", name: " << res->getString("newspaper_name") << std::endl;
+        std::cout << "period: " << res->getInt("_period") << std::endl;
+
+    }
+    delete res;
+    delete stmt;
+    delete con;
+
+    getInt()：用于获取整数值，对应于 MySQL 中的 INT 类型。
+
+    getUInt()：用于获取无符号整数值，对应于 MySQL 中的 UNSIGNED INT 类型。
+
+    getInt64() 和 getUInt64()：用于获取长整数值，对应于 MySQL 中的 BIGINT 类型。
+
+    getDouble()：用于获取浮点数值，对应于 MySQL 中的 FLOAT 和 DOUBLE 类型。
+
+    getString()：用于获取字符串值，对应于 MySQL 中的 CHAR、VARCHAR、TEXT 类型。
+
+    getBoolean()：用于获取布尔值，对应于 MySQL 中的 TINYINT(1) 类型。
+
+    getBlob()：用于获取二进制大对象(BLOB)，对应于 MySQL 中的 BLOB 类型。
+
+    getDate()、getTime() 和 getTimestamp()：用于获取日期、时间和时间戳，对应于 MySQL 中的 DATE、TIME 和 TIMESTAMP 类型。
+
+    sql::Date date = res->getDate("date_column");
+    int year = date.getYear();
+    int month = date.getMonth();
+    int day = date.getDay();
+
+*/
