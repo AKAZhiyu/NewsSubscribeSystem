@@ -13,34 +13,27 @@
 #include <iostream>
 #include <stdexcept>
 
+
 class MySQLConnector {
 private:
-    sql::Connection* con;
+    sql::mysql::MySQL_Driver* driver;
+    std::unique_ptr<sql::Connection> con;
 
 public:
-    MySQLConnector(const std::string& tcp, const std::string& user, const std::string& password, const std::string& dbs) {
-        sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
+    MySQLConnector(const std::string& host, const std::string& user, const std::string& password) {
         try {
-            con = driver->connect(tcp, user, password);
-            con->setSchema(dbs);
+            driver = sql::mysql::get_mysql_driver_instance();
+            con = std::unique_ptr<sql::Connection>(driver->connect(host, user, password));
         }
         catch (sql::SQLException& e) {
-            std::string errMsg = "Connection to the database is Failed";
-            errMsg += e.what();
-            throw sql::SQLException(errMsg);
-        }
-    }
-    
-    const auto& getConnector() {
-        return con;
-    }
-
-    ~MySQLConnector() {
-        if (con != NULL) {
-            delete con;
+            std::cout << "SQL Exception: Cannot connect to the database.\n" << e.what();
+            throw;
         }
     }
 
+    sql::Connection* getConnection() const {
+        return con.get();
+    }
 
-    
+    ~MySQLConnector() = default; 
 };
