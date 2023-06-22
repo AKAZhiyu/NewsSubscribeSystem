@@ -53,15 +53,18 @@ CREATE TABLE IF NOT EXISTS Publication (
 );
 
 -- 插入用户数据
-INSERT INTO UserAccount (username, password, address, balance) 
+INSERT INTO UserAccount (username, password, address, balance)
 VALUES ('user1', 'user_password1', '123 Main St', 100.00),
-       ('user2', 'user_password2', '456 Pine St', 200.00);
+       ('user2', 'user_password2', '456 Pine St', 200.00),
+       ('user3', 'user_password3', '789 Oak St', 150.00),
+       ('user4', 'user_password4', '321 Elm St', 300.00),
+       ('user5', 'user_password5', '555 Maple St', 50.00);
 
 -- 插入出版商数据
 INSERT INTO Publisher (username, password, address, introduction)
-VALUES ('Conde_Nast', 'Conde_Nast_password', 'New York, NY, USA', 
+VALUES ('Conde_Nast', 'Conde_Nast_password', 'New York, NY, USA',
         'Condé Nast is a global media company producing premium content for more than 263 million consumers in 30 markets.'),
-       ('News_UK', 'News_UK_password', 'London, UK', 
+       ('News_UK', 'News_UK_password', 'London, UK',
        'News UK is a British newspaper publisher and a wholly owned subsidiary of American newspaper conglomerate News Corp.');
 
 -- 插入报刊数据
@@ -85,31 +88,31 @@ VALUES (1, 1, '2023-01-01'),
        (2, 2, '2023-02-01');
 
 CREATE VIEW UserSubscription AS
-SELECT 
-    U.id AS user_id, 
-    U.username AS username, 
-    N.newspaper_name AS newspaper_name, 
-    S.start_date AS start_date, 
+SELECT
+    U.id AS user_id,
+    U.username AS username,
+    N.newspaper_name AS newspaper_name,
+    S.start_date AS start_date,
     DATE_ADD(S.start_date, INTERVAL S.duration DAY) AS end_date
-FROM 
+FROM
     UserAccount U
-JOIN 
+JOIN
     Subscription S ON U.id = S._user_id
-JOIN 
+JOIN
     Newspaper N ON S.newspaper_id = N.id;
 
 CREATE VIEW PublisherNewspaper AS
-SELECT 
-    P.id AS publisher_id, 
-    P.username AS publisher_name, 
-    N.id AS newspaper_id, 
+SELECT
+    P.id AS publisher_id,
+    P.username AS publisher_name,
+    N.id AS newspaper_id,
     N.newspaper_name AS newspaper_name,
     Pub.publication_date AS publication_date
-FROM 
+FROM
     Publisher P
-JOIN 
+JOIN
     Publication Pub ON P.id = Pub.publisher_id
-JOIN 
+JOIN
     Newspaper N ON Pub.newspaper_id = N.id;
 
 CREATE INDEX idx_user_username ON UserAccount(username);
@@ -117,3 +120,49 @@ CREATE INDEX idx_publisher_username ON Publisher(username);
 CREATE INDEX idx_newspaper_name ON Newspaper(newspaper_name);
 CREATE INDEX idx_newspaper_type ON Newspaper(_type);
 CREATE INDEX idx_subscription_user ON Subscription(_user_id);
+
+
+-- 插入更多出版商数据
+INSERT INTO Publisher (username, password, address, introduction)
+VALUES ('Bloomberg', 'Bloomberg_password', '731 Lexington, New York, NY, USA',
+        'Bloomberg L.P. is a privately held financial, software, data, and media company headquartered in Midtown Manhattan, New York City.'),
+       ('The_Economist_Group', 'The_Economist_Group_password', 'The Adelphi, 1-11 John Adam St, London, UK',
+       'The Economist Group is a world renowned multinational media company headquartered in London, England. It is best known as publisher of The Economist.'),
+       ('Hearst_Communications', 'Hearst_Communications_password', '300 W. 57th Street, New York, NY, USA',
+       'Hearst Communications, often referred to simply as Hearst, is an American multinational mass media and business information conglomerate based in New York City, New York.'),
+       ('Time_Inc', 'Time_Inc_password', '225 Liberty Street, New York, NY, USA',
+       'Time Inc. was an American worldwide mass media corporation founded on November 28, 1922, by Henry Luce and Briton Hadden, and based in New York City.'),
+       ('Newsweek', 'Newsweek_password', '33 Whitehall Street, New York, NY, USA',
+       'Newsweek is an American weekly news magazine founded in 1933, features articles on politics, business, culture, technology and science.');
+
+-- 插入更多报刊数据
+INSERT INTO Newspaper (newspaper_name, cover, _period, introduction, price, _type)
+VALUES ('Bloomberg Businessweek', '/covers/bloomberg.jpg', 7, 'Bloomberg Businessweek, known until 2010 as BusinessWeek, is a weekly business magazine.', 5.99, 'Economics'),
+       ('The Economist', '/covers/economist.jpg', 7, 'The Economist is an international weekly newspaper printed in magazine-format and published digitally.', 1.99, 'Economics'),
+       ('Cosmopolitan', '/covers/cosmopolitan.jpg', 30, 'Cosmopolitan is an international fashion and entertainment magazine for women.', 2.99, 'Fashion'),
+       ('Time', '/covers/time.jpg', 7, 'Time is an American weekly news magazine and news website published and based in New York City.', 1.50, 'News'),
+       ('Newsweek', '/covers/newsweek.jpg', 7, 'Newsweek is an American weekly news magazine founded in 1933.', 1.99, 'News');
+
+-- 插入更多出版数据
+INSERT INTO Publication (publisher_id, newspaper_id, publication_date)
+VALUES (3, 3, '2023-06-01'),
+       (4, 4, '2023-06-02'),
+       (5, 5, '2023-06-03'),
+       (6, 6, '2023-06-04'),
+       (7, 7, '2023-06-05');
+
+-- 插入更多用户数据
+INSERT INTO UserAccount (username, password, address, balance)
+VALUES ('user6', 'user_password6', '111 Cedar St', 350.00),
+       ('user7', 'user_password7', '222 Willow St', 400.00),
+       ('user8', 'user_password8', '333 Pine St', 200.00),
+       ('user9', 'user_password9', '444 Maple St', 250.00),
+       ('user10', 'user_password10', '555 Oak St', 300.00);
+
+-- 插入更多用户订阅数据
+INSERT INTO Subscription (_user_id, newspaper_id, duration, start_date)
+VALUES (6, 6, 30, '2023-06-01'),
+       (7, 7, 90, '2023-06-02'),
+       (8, 1, 60, '2023-06-03'),
+       (9, 2, 30, '2023-06-04'),
+       (10, 3, 60, '2023-06-05');

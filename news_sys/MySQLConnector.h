@@ -26,7 +26,7 @@ public:
             con = std::unique_ptr<sql::Connection>(driver->connect(host, user, password));
         }
         catch (sql::SQLException& e) {
-            std::cout << "SQL Exception: Cannot connect to the database.\n" << e.what();
+            std::cerr << "SQL Exception: Cannot connect to the database.\n" << e.what();
             throw;
         }
     }
