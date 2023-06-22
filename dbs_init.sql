@@ -34,16 +34,41 @@ CREATE TABLE IF NOT EXISTS _Admin (
 );
 
 CREATE TABLE IF NOT EXISTS Subscription (
+    subscription_id INT AUTO_INCREMENT PRIMARY KEY,
     _user_id INT NOT NULL,
     newspaper_id INT NOT NULL,
     duration INT NOT NULL,
     start_date DATE NOT NULL,
-    PRIMARY KEY(_user_id, newspaper_id),
+    end_date DATE,
     FOREIGN KEY(_user_id) REFERENCES UserAccount(id),
     FOREIGN KEY(newspaper_id) REFERENCES Newspaper(id)
 );
 
+DELIMITER //
+CREATE TRIGGER update_end_date
+BEFORE UPDATE ON Subscription
+FOR EACH ROW
+BEGIN
+    IF NEW.start_date <> OLD.start_date OR NEW.duration <> OLD.duration THEN
+        SET NEW.end_date = DATE_ADD(NEW.start_date, INTERVAL NEW.duration DAY);
+    END IF;
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER calculate_end_date
+BEFORE INSERT ON Subscription
+FOR EACH ROW
+BEGIN
+    SET NEW.end_date = DATE_ADD(NEW.start_date, INTERVAL NEW.duration DAY);
+END;
+//
+DELIMITER ;
+
+
 CREATE TABLE IF NOT EXISTS Publication (
+
     publisher_id INT NOT NULL,
     newspaper_id INT NOT NULL,
     publication_date DATE NOT NULL,
@@ -92,6 +117,7 @@ SELECT
     U.id AS user_id,
     U.username AS username,
     N.newspaper_name AS newspaper_name,
+    N.id AS newspaper_id,
     S.start_date AS start_date,
     DATE_ADD(S.start_date, INTERVAL S.duration DAY) AS end_date
 FROM
@@ -165,4 +191,14 @@ VALUES (6, 6, 30, '2023-06-01'),
        (7, 7, 90, '2023-06-02'),
        (8, 1, 60, '2023-06-03'),
        (9, 2, 30, '2023-06-04'),
-       (10, 3, 60, '2023-06-05');
+       (10, 3, 60, '2023-06-05'),
+       (3, 5, 60, '2023-06-10'),
+       (7, 2, 30, '2023-06-14'),
+       (1, 7, 90, '2023-06-08'),
+       (9, 4, 30, '2023-06-18'),
+       (6, 3, 60, '2023-06-20'),
+       (2, 1, 30, '2023-06-22'),
+       (8, 6, 90, '2023-06-12'),
+       (5, 2, 60, '2023-06-24'),
+       (10, 1, 30, '2023-06-15'),
+       (4, 7, 60, '2023-06-17');
