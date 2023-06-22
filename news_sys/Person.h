@@ -10,7 +10,7 @@ protected:
 	std::string id;
 	std::string password;
 	const MySQLConnector* connector;
-
+    bool isPassword(const std::string& passed) const { return passed == password; }
 
 public:
 	virtual ~Person() {}
@@ -21,7 +21,7 @@ public:
 
 	const std::string& getId() const { return id; }
 
-	bool isPassword(const std::string& passed) const { return passed == password; }
+    virtual bool renewPassword(const std::string& old_password, const std::string& new_password) = 0;
 
     //std::vector<std::pair<std::string, int>> getTopPublications(int start, int end) {
     //    std::vector<std::pair<std::string, int>> topPublications;
