@@ -111,12 +111,12 @@ public:
     }
 
     std::vector<std::tuple<int, std::string, std::string, int, std::string, double, std::string>>
-        showPublications(int start, int end) {
-        std::vector<std::tuple<int, std::string, std::string, int, std::string, double, std::string>> publications;
+        showNewspapers(int start, int end) {
+        std::vector<std::tuple<int, std::string, std::string, int, std::string, double, std::string>> Newspapers;
         int n = end - start + 1;
         if (n < 1) {
             std::cerr << "Invalid range.\n";
-            return publications;
+            return Newspapers;
         }
         // 创建预备 SQL 查询
         std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
@@ -135,15 +135,176 @@ public:
 
         // 遍历结果集
         while (res->next()) {
-            publications.push_back(std::make_tuple(res->getInt("id"), res->getString("newspaper_name"),
+            Newspapers.push_back(std::make_tuple(res->getInt("id"), res->getString("newspaper_name"),
                 res->getString("cover"), res->getInt("_period"),
                 res->getString("introduction"), res->getDouble("price"),
                 res->getString("_type")));
         }
-        return publications;
+        return Newspapers;
     }
 
+    std::vector<std::tuple<int, std::string, std::string, std::string>>
+        showPublishers(int start, int end) {
+        std::vector<std::tuple<int, std::string, std::string, std::string>> publishers;
+        int n = end - start + 1;
+        if (n < 1) {
+            std::cerr << "Invalid range.\n";
+            return publishers;
+        }
+        // 创建预备 SQL 查询
+        std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
+            R"(SELECT id, username, address, introduction
+            FROM Publisher
+            ORDER BY id
+            LIMIT ?, ?)"
+        ));
 
+        // 设置预备 SQL 查询参数
+        pstmt->setInt(1, start);
+        pstmt->setInt(2, n);
+
+        // 执行预备 SQL 查询
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        // 遍历结果集
+        while (res->next()) {
+            publishers.push_back(std::make_tuple(res->getInt("id"), res->getString("username"),
+                res->getString("address"), res->getString("introduction")));
+        }
+        return publishers;
+    }
+
+    std::vector<std::tuple<int, std::string, std::string, int, std::string, double, std::string>> 
+        findNewspaperByName(const std::string& name) {
+        // 创建存储返回值的向量
+        std::vector<std::tuple<int, std::string, std::string, int, std::string, double, std::string>> foundNewspapers;
+
+        // 创建预备 SQL 查询
+        std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
+            R"(SELECT *
+        FROM Newspaper
+        WHERE newspaper_name LIKE ?)"
+        ));
+
+        // 设置预备 SQL 查询参数
+        pstmt->setString(1, "%" + name + "%");
+
+        // 执行预备 SQL 查询
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        // 遍历结果集
+        while (res->next()) {
+            foundNewspapers.push_back(std::make_tuple(
+                res->getInt("id"),
+                res->getString("newspaper_name"),
+                res->getString("cover"),
+                res->getInt("_period"),
+                res->getString("introduction"),
+                res->getDouble("price"),
+                res->getString("_type")));
+        }
+
+        return foundNewspapers;
+    }
+
+    //If donnot find, return std::make_tuple(-1, "", "", -1, "", -1.0, "");
+    std::tuple<int, std::string, std::string, int, std::string, double, std::string> 
+        findNewspaperById(int id) {
+        // 创建预备 SQL 查询
+        std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
+            R"(SELECT *
+        FROM Newspaper
+        WHERE id = ?)"
+        ));
+
+        // 设置预备 SQL 查询参数
+        pstmt->setInt(1, id);
+
+        // 执行预备 SQL 查询
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        // 如果结果集不为空，返回结果
+        if (res->next()) {
+            return std::make_tuple(
+                res->getInt("id"),
+                res->getString("newspaper_name"),
+                res->getString("cover"),
+                res->getInt("_period"),
+                res->getString("introduction"),
+                res->getDouble("price"),
+                res->getString("_type"));
+        }
+
+        // 如果结果集为空，返回一个特殊的tuple，其id为-1，表示找不到结果
+        return std::make_tuple(-1, "", "", -1, "", -1.0, "");
+    }
+
+    std::vector<std::tuple<int, std::string, std::string, int, std::string,
+        double, std::string, std::string>> 
+        findNewspapersByPublisherName(const std::string& publisherName) {
+        std::vector<std::tuple<int, std::string, std::string, int, std::string, double, std::string, std::string>> newspapers;
+        std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
+            R"(SELECT Newspaper.*, Publisher.username AS publisher_username
+        FROM Newspaper
+        JOIN Publication ON Newspaper.id = Publication.newspaper_id
+        JOIN Publisher ON Publication.publisher_id = Publisher.id
+        WHERE Publisher.username LIKE ?)"
+        ));
+
+        pstmt->setString(1, "%" + publisherName + "%");
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        while (res->next()) {
+            newspapers.push_back(
+                std::make_tuple(
+                    res->getInt("id"),
+                    res->getString("newspaper_name"),
+                    res->getString("cover"),
+                    res->getInt("_period"),
+                    res->getString("introduction"),
+                    res->getDouble("price"),
+                    res->getString("_type"),
+                    res->getString("publisher_username")
+                )
+            );
+        }
+        return newspapers;
+    }
+
+    std::vector<std::tuple<int, std::string, std::string, int, std::string,
+        double, std::string, std::string>>
+        findNewspapersByPublisherId(int publisherId) {
+        std::vector<std::tuple<int, std::string, std::string, int, std::string,
+            double, std::string, std::string>> newspapers;
+
+        std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
+            R"(SELECT Newspaper.*, Publisher.username AS publisher_username
+        FROM Newspaper
+        JOIN Publication ON Newspaper.id = Publication.newspaper_id
+        JOIN Publisher ON Publication.publisher_id = Publisher.id
+        WHERE Publisher.id = ?)"
+        ));
+
+        pstmt->setInt(1, publisherId);
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        while (res->next()) {
+            newspapers.push_back(
+                std::make_tuple(
+                    res->getInt("id"),
+                    res->getString("newspaper_name"),
+                    res->getString("cover"),
+                    res->getInt("_period"),
+                    res->getString("introduction"),
+                    res->getDouble("price"),
+                    res->getString("_type"),
+                    res->getString("publisher_username")
+                )
+            );
+        }
+
+        return newspapers;
+    }
 
 };
 
