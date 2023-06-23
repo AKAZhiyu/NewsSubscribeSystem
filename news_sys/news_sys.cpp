@@ -6,30 +6,21 @@
 #include <cppconn/resultset.h>
 
 #include <iostream>
-
+#include"MySQLConnector.h"
+#include"Admin.h"
+#include"User.h"
 int main()
 {
-    sql::mysql::MySQL_Driver* driver;
-    sql::Connection* con;
-    sql::Statement* stmt;
+    MySQLConnector connector("tcp://127.0.0.1:3306", "root", "zzx20030628", "subscription_db");
+    User usr("1", "123", &connector);
+    std::cout << usr.getId() << std::endl;
+    std::cout << usr.getUsername() << std::endl;
+    std::cout << usr.getAddress() << std::endl;
+    std::cout << usr.getAddress() << std::endl;
+    std::cout << usr.getBalance() << std::endl;
+    std::cout << usr.getAddress() << std::endl;
 
-    driver = sql::mysql::get_mysql_driver_instance();
-    con = driver->connect("tcp://127.0.0.1:3306", "root", "zzx20030628");
-    con->setSchema("subscription_db");
-    stmt = con->createStatement();
-    //stmt->execute("CREATE TABLE IF NOT EXISTS test_table (id INT AUTO_INCREMENT, name VARCHAR(255), PRIMARY KEY(id))");
-    //stmt->executeQuery("SELECT * FROM newspaper");
-    sql::ResultSet* res;
-    res = stmt->executeQuery("SELECT * FROM newspaper");
-    while (res->next()) {
-        std::cout << "id: " << res->getInt("id") << ", name: " << res->getString("newspaper_name") << std::endl;
-        std::cout << "period: " << res->getInt("_period") << std::endl;
 
-    }
-    delete res;
-    delete stmt;
-    delete con;
-    return 0;
 }
 
 /*

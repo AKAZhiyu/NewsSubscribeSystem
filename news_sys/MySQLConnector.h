@@ -20,10 +20,11 @@ private:
     std::unique_ptr<sql::Connection> con;
 
 public:
-    MySQLConnector(const std::string& host, const std::string& user, const std::string& password) {
+    MySQLConnector(const std::string& host, const std::string& user, const std::string& password, const std::string& shcema) {
         try {
             driver = sql::mysql::get_mysql_driver_instance();
             con = std::unique_ptr<sql::Connection>(driver->connect(host, user, password));
+            con->setSchema("subscription_db");
         }
         catch (sql::SQLException& e) {
             std::cerr << "SQL Exception: Cannot connect to the database.\n" << e.what();

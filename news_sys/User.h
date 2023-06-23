@@ -10,8 +10,11 @@ protected:
     double balance;
 
     void validateUserLogin() {
-        std::unique_ptr<sql::Statement> stmt((*connector).getConnection()->createStatement());
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT password FROM UserAccount WHERE id = " + id));
+        std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
+            "SELECT password FROM UserAccount WHERE id = ?"));
+        pstmt->setString(1, id);
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
         if (res->next()) {  // 如果结果集不为空
             if (!isPassword(res->getString("password"))) {
                 std::string errMsg = "Wrong Password";
@@ -60,9 +63,15 @@ public:
         validateUserLogin();
         std::unique_ptr<sql::Statement> stmt((*connector).getConnection()->createStatement());
         std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT * FROM UserAccount WHERE id = " + id));
-        username = res->getString("username");
-        address = res->getString("address");
-        balance = res->getDouble("balance");
+        if (res->next()) {
+            username = res->getString("username");
+            address = res->getString("address");
+            balance = res->getDouble("balance");
+        }
+        else {
+            throw std::runtime_error("Account Error");
+        }
+        
     }
 
     const std::string& getUsername() const {
