@@ -190,7 +190,7 @@ public:
         return subscriptions;
     }
     
-    bool subscribeNewspaper(const std::string& newspaperId, int times) {
+    void subscribeNewspaper(const std::string& newspaperId, int times) {
         // 获取报纸的价格
         double newspaperPrice;
         {
@@ -212,32 +212,56 @@ public:
 
         // 检查用户的余额是否足够
         if (balance < totalCost) {
-            return false;
+            throw std::runtime_error("Not enough balance for the subscription");
         }
 
         // 扣除余额
         balance -= totalCost;
         {
             std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
-                "UPDATE UserAccount SET balance = balance - ? WHERE id = ?"
+                "UPDATE UserAccount SET balance = ? WHERE id = ?"
             ));
-            pstmt->setDouble(1, totalCost);
+            pstmt->setDouble(1, balance);
             pstmt->setString(2, id);
             pstmt->executeUpdate();
         }
 
-        // 添加订阅信息
-        {
-            std::unique_ptr<sql::PreparedStatement> pstmt(connector->getConnection()->prepareStatement(
-                "INSERT INTO Subscription (_user_id, newspaper_id, duration, start_date) VALUES (?, ?, ?, CURDATE())"
-            ));
-            pstmt->setString(1, id);
-            pstmt->setString(2, newspaperId);
-            pstmt->setInt(3, times);
-            pstmt->executeUpdate();
-        }
+        //  Add or update a record in the Subscription table
+        
+        // First, check if a subscription already exists
+        std::unique_ptr<sql::PreparedStatement> pstmt_check(connector->getConnection()->prepareStatement(
+            "SELECT * FROM Subscription WHERE _user_id = ? AND newspaper_id = ?"
+        ));
+        pstmt_check->setString(1, this->id);
+        pstmt_check->setString(2, newspaperId);
+        std::unique_ptr<sql::ResultSet> res_check(pstmt_check->executeQuery());
 
-        return true;
+        if (res_check->next()) {
+            // If a subscription already exists, update it
+            std::unique_ptr<sql::PreparedStatement> pstmt_update(connector->getConnection()->prepareStatement(
+                "UPDATE Subscription SET duration = duration + ?, end_date = DATE_ADD(end_date, INTERVAL ? DAY) WHERE _user_id = ? AND newspaper_id = ?"
+            ));
+            pstmt_update->setInt(1, times);
+            pstmt_update->setInt(2, times);
+            pstmt_update->setString(3, this->id);
+            pstmt_update->setString(4, newspaperId);
+            pstmt_update->executeUpdate();
+        }
+        else {
+            // If no subscription exists, create a new one
+            std::unique_ptr<sql::PreparedStatement> pstmt_insert(connector->getConnection()->prepareStatement(
+                "INSERT INTO Subscription(_user_id, newspaper_id, duration, start_date, end_date) VALUES (?, ?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL ? DAY))"
+            ));
+            pstmt_insert->setString(1, this->id);
+            pstmt_insert->setString(2, newspaperId);
+            pstmt_insert->setInt(3, times);
+            pstmt_insert->setInt(4, times);
+            pstmt_insert->executeUpdate();
+        }
+        
+
+
+;
     }
 
 
